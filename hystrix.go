@@ -23,14 +23,6 @@ func main() {
 		log.Panicln("Hystrix Url must be set")
 	}
 
-	send := make(chan string, 100)
-
-	go func() {
-		for msg := range send {
-			fmt.Println(msg)
-		}
-	}()
-
 	for {
 		log.Println("Try get", url)
 		resp, err := http.Get(url)
@@ -50,12 +42,10 @@ func main() {
 		scanner := bufio.NewScanner(resp.Body)
 		for scanner.Scan(){
 			text := scanner.Text()
-			if len(text)>0{
+			if len(text)>6{
 				text = text[6:]
-				if len(text) > 0 {
-					if err = json.Unmarshal([]byte(text), &tmpjson); err == nil {
-						send <- text
-					}
+				if err = json.Unmarshal([]byte(text), &tmpjson); err == nil {
+					fmt.Println(text)
 				}
 			}
 		}
