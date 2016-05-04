@@ -3,36 +3,12 @@ package main
 import (
 	"net/http"
 	"log"
-	"io"
-	"encoding/json"
 	"time"
 	"fmt"
 	"flag"
+	"bufio"
+	"encoding/json"
 )
-
-func readline(reader io.Reader) (line []byte, err error) {
-	line = make([]byte, 0, 100)
-	for {
-		b := make([]byte, 1)
-		n, er := reader.Read(b)
-		if n > 0 {
-			c := b[0]
-			if c == '\n' { // end of line
-				break
-			}
-			line = append(line, c)
-		}
-		if er != nil {
-			err = er
-			return
-		}
-	}
-	if len(line) > 6 {
-		line = line[6:]
-	}
-	return
-}
-
 
 func main() {
 	var url string
@@ -47,11 +23,11 @@ func main() {
 		log.Panicln("Hystrix Url must be set")
 	}
 
-	send := make(chan []byte, 100)
+	send := make(chan string, 100)
 
 	go func() {
 		for msg := range send {
-			fmt.Println(string(msg))
+			fmt.Println(msg)
 		}
 	}()
 
@@ -71,18 +47,16 @@ func main() {
 			continue
 		}
 
-		for {
-			body, err := readline(resp.Body)
-			if err != nil {
-				break
-			}
-
-			if len(body) == 0 {
-				continue
-			}
-
-			if err = json.Unmarshal(body, &tmpjson); err == nil {
-				send <- body
+		scanner := bufio.NewScanner(resp.Body)
+		for scanner.Scan(){
+			text := scanner.Text()
+			if len(text)>0{
+				text = text[6:]
+				if len(text) > 0 {
+					if err = json.Unmarshal([]byte(text), &tmpjson); err == nil {
+						send <- text
+					}
+				}
 			}
 		}
 	}
