@@ -44,7 +44,7 @@ func main() {
 			text := scanner.Text()
 			if len(text)>6{
 				text = text[6:]
-				if err = json.Unmarshal([]byte(text), &tmpjson); err == nil {
+				if json.Unmarshal([]byte(text), &tmpjson) == nil {
 					fmt.Println(text)
 				}
 			}
